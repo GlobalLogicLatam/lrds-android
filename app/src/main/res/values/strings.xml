@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">La Ruta Del Software</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Contraseña (opcional)</string>
+    <string name="action_sign_in_short">Ingresar</string>
+    <string name="error_invalid_email">El email es inválido</string>
+    <string name="error_invalid_password">La contraseña es muy corta</string>
+    <string name="error_incorrect_password">La contraseña es incorrecta</string>
+    <string name="error_field_required">Este campo es requerido</string>
+    <string name="welcome_user">Bienvenido %s</string>
+</resources>
