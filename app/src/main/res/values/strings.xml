@@ -2,12 +2,16 @@
     <string name="app_name">La Ruta Del Software</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Contraseña (opcional)</string>
-    <string name="action_sign_in_short">Ingresar</string>
-    <string name="error_invalid_email">El email es inválido</string>
+    <string name="prompt_dni">DNI</string>
+    <string name="prompt_password">Contraseña</string>
+    <string name="action_sign_in_short">Iniciar sesión</string>
+    <string name="error_invalid_dni">El DNI es inválido</string>
     <string name="error_invalid_password">La contraseña es muy corta</string>
     <string name="error_incorrect_password">La contraseña es incorrecta</string>
     <string name="error_field_required">Este campo es requerido</string>
+    <string name="you_should_wait">Demasiados intentos realizados. Espere 10 minutos para volver a ingresar.</string>
     <string name="welcome_user">Bienvenido %s</string>
+    <string name="national_technological_university">Universidad Tecnológica Nacional</string>
+    <string name="register">&lt;u>Registrarme&lt;/u></string>
+    <string name="recovery_password">&lt;u>¿Olvidaste tu contraseña?&lt;/u></string>
 </resources>
