@@ -13,13 +13,15 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Random;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import java.net.HttpURLConnection;
+import java.util.Date;
 
 /**
  * A login screen that offers login via email/password.
@@ -31,7 +33,7 @@ public class LoginActivity extends AppCompatActivity {
     private UserLoginTask mAuthTask = null;
 
     // UI references.
-    private EditText mDniView;
+    private EditText mUsernameView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
@@ -41,7 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
-        mDniView = (EditText) findViewById(R.id.dni);
+        mUsernameView = (EditText) findViewById(R.id.username);
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -79,11 +81,11 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // Reset errors.
-        mDniView.setError(null);
+        mUsernameView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String dni = mDniView.getText().toString();
+        String username = mUsernameView.getText().toString();
         String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
@@ -91,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check for a valid password, if the user entered one.
         if (TextUtils.isEmpty(password)) {
-            mDniView.setError(getString(R.string.error_field_required));
+            mUsernameView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
         } else if (!isPasswordValid(password)) {
@@ -100,14 +102,14 @@ public class LoginActivity extends AppCompatActivity {
             cancel = true;
         }
 
-        // Check for a valid dni address.
-        if (TextUtils.isEmpty(dni)) {
-            mDniView.setError(getString(R.string.error_field_required));
-            focusView = mDniView;
+        // Check for a valid username address.
+        if (TextUtils.isEmpty(username)) {
+            mUsernameView.setError(getString(R.string.error_field_required));
+            focusView = mUsernameView;
             cancel = true;
-        } else if (!isDniValid(dni)) {
-            mDniView.setError(getString(R.string.error_invalid_dni));
-            focusView = mDniView;
+        } else if (!isUsernameValid(username)) {
+            mUsernameView.setError(getString(R.string.error_invalid_username));
+            focusView = mUsernameView;
             cancel = true;
         }
 
@@ -119,12 +121,12 @@ public class LoginActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(dni, password);
+            mAuthTask = new UserLoginTask(username, password);
             mAuthTask.execute((Void) null);
         }
     }
 
-    private boolean isDniValid(String dni) {
+    private boolean isUsernameValid(String username) {
         return true;
     }
 
@@ -173,10 +175,11 @@ public class LoginActivity extends AppCompatActivity {
      * Represents an asynchronous login task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Integer> {
-        private final int STATUS_OK = 0;
-        private final int STATUS_USER_AND_PASSWORD_ERROR = 1;
-        private final int STATUS_WAIT_ERROR = 2;
+    public class UserLoginTask extends AsyncTask<Void, Void, Response> {
+        private final int ERROR_CODE_SHOULD_WAIT = 1;
+        private final Response RESPONSE_SUCCESSFUL_LOGIN = new Response(200, new Gson().fromJson("{'time':'" + new Date() + "', 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'}", JsonObject.class));
+        private final Response RESPONSE_ERROR_SHOULD_WAIT = new Response(400, new Gson().fromJson("{'time':'" + new Date() + "', 'errorCode': " + ERROR_CODE_SHOULD_WAIT + "}", JsonObject.class));
+        private final Response RESPONSE_ERROR_INVALID_CREDENTIALS = new Response(403);
         /**
          * A dummy authentication store containing known user names and passwords.
          * TODO: remove after connecting to a real authentication system.
@@ -187,16 +190,16 @@ public class LoginActivity extends AppCompatActivity {
                 "34682101:globallogic"
         };
 
-        private final String mDni;
-        private final String mPassword;
+        private final String userName;
+        private final String password;
 
-        UserLoginTask(String dni, String password) {
-            mDni = dni;
-            mPassword = password;
+        UserLoginTask(String username, String password) {
+            userName = username;
+            this.password = password;
         }
 
         @Override
-        protected Integer doInBackground(Void... params) {
+        protected Response doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
 
             try {
@@ -208,35 +211,39 @@ public class LoginActivity extends AppCompatActivity {
 
             for (String credential : DUMMY_CREDENTIALS) {
                 String[] pieces = credential.split(":");
-                if (pieces[0].equals(mDni)) {
+                if (pieces[0].equals(userName)) {
                     // Account exists, return true if the password matches.
-                    if (pieces[1].equals(mPassword)) {
-                        return STATUS_OK;
+                    if (pieces[1].equals(password)) {
+                        return RESPONSE_SUCCESSFUL_LOGIN;
                     } else {
-                        return STATUS_USER_AND_PASSWORD_ERROR;
+                        return RESPONSE_ERROR_INVALID_CREDENTIALS;
                     }
                 }
             }
 
-            return STATUS_WAIT_ERROR;
+            return RESPONSE_ERROR_SHOULD_WAIT;
         }
 
         @Override
-        protected void onPostExecute(final Integer success) {
+        protected void onPostExecute(final Response response) {
             mAuthTask = null;
             showProgress(false);
 
-            switch (success) {
-                case STATUS_OK:
-                    Toast.makeText(LoginActivity.this, getString(R.string.welcome_user, mDni), Toast.LENGTH_SHORT).show();
+            switch (response.getStatusCode()) {
+                case HttpURLConnection.HTTP_OK:
+                    Toast.makeText(LoginActivity.this, getString(R.string.welcome_user, response.getBody().get("token")), Toast.LENGTH_SHORT).show();
                     break;
-                case STATUS_USER_AND_PASSWORD_ERROR:
+                case HttpURLConnection.HTTP_FORBIDDEN:
                     mPasswordView.setError(getString(R.string.error_incorrect_password));
                     mPasswordView.requestFocus();
                     break;
-                case STATUS_WAIT_ERROR:
-                default:
-                    Toast.makeText(LoginActivity.this, getString(R.string.you_should_wait), Toast.LENGTH_SHORT).show();
+                case HttpURLConnection.HTTP_BAD_REQUEST:
+                    switch (response.getBody().get("errorCode").getAsInt()) {
+                        case ERROR_CODE_SHOULD_WAIT:
+                            Toast.makeText(LoginActivity.this, getString(R.string.error_you_should_wait), Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                    break;
             }
         }
 
@@ -244,6 +251,37 @@ public class LoginActivity extends AppCompatActivity {
         protected void onCancelled() {
             mAuthTask = null;
             showProgress(false);
+        }
+    }
+
+    private class Response {
+        Integer statusCode;
+        JsonObject body;
+
+        public Response(int statusCode) {
+            this.statusCode = statusCode;
+            this.body = new JsonObject();
+        }
+
+        public Response(int statusCode, JsonObject body) {
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+
+        public Integer getStatusCode() {
+            return statusCode;
+        }
+
+        public void setStatusCode(Integer statusCode) {
+            this.statusCode = statusCode;
+        }
+
+        public JsonObject getBody() {
+            return body;
+        }
+
+        public void setBody(JsonObject body) {
+            this.body = body;
         }
     }
 }
