@@ -93,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check for a valid password, if the user entered one.
         if (TextUtils.isEmpty(password)) {
-            mUsernameView.setError(getString(R.string.error_field_required));
+            mPasswordView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
         } else if (!isPasswordValid(password)) {
@@ -185,16 +185,19 @@ public class LoginActivity extends AppCompatActivity {
          * TODO: remove after connecting to a real authentication system.
          */
         private final String[] DUMMY_CREDENTIALS = new String[]{
-                "1234:globallogic",
-                "12345678:globallogic",
-                "34682101:globallogic"
+                "facu:globallogic",
+                "jorge:globallogic",
+                "ema:globallogic",
+                "juan:globallogic",
+                "ale:globallogic",
+                "gaston:globallogic"
         };
 
         private final String userName;
         private final String password;
 
         UserLoginTask(String username, String password) {
-            userName = username;
+            this.userName = username;
             this.password = password;
         }
 
